@@ -123,7 +123,7 @@
               <p>Select items from the current clinic's stock.</p>
             </div>
 
-            <button class="box-btn" id="toggleRequestBox">
+            <button class="box-btn" id="toggleRequestBox" aria-controls="requestBox" aria-expanded="false">
               Request Box (<span id="boxCount">0</span>)
             </button>
           </div>
@@ -214,31 +214,20 @@
 
       <!-- ANALYTICS AND REPORTS -->
       <section id="analyticsPage" class="page">
-        <div class="panel">
-          <div class="panel-heading">
+        <div class="panel analytics-panel">
+          <div class="panel-heading analytics-heading">
             <div>
-              <h2>Analytics & Reports</h2>
-              <p>Request history and monthly stock consumption.</p>
+              <span class="analytics-eyebrow">INVENTORY OVERVIEW</span>
+              <h2>Request Analytics</h2>
+              <p>Review requests, filter by category, and export a categorized report.</p>
             </div>
-
-            <button class="secondary-btn" id="printReport">
-              Print Report
-            </button>
+            <button class="primary-btn" id="printReport">Export Report</button>
           </div>
 
-          <div class="filter-grid">
-            <label>
-              From Date
-              <input id="reportDateFrom" type="date">
-            </label>
-
-            <label>
-              To Date
-              <input id="reportDateTo" type="date">
-            </label>
-
-            <label>
-              Status
+          <div class="analytics-filters">
+            <label>From date<input id="reportDateFrom" type="date"></label>
+            <label>To date<input id="reportDateTo" type="date"></label>
+            <label>Status
               <select id="reportStatus">
                 <option value="">All statuses</option>
                 <option value="pending">Pending</option>
@@ -247,60 +236,27 @@
                 <option value="done">Done</option>
               </select>
             </label>
-
-            <label>
-              Search Item
-              <input
-                id="reportSearch"
-                type="search"
-                placeholder="Item name or code..."
-              >
+            <label>Category
+              <select id="reportCategory"><option value="">All categories</option></select>
+            </label>
+            <label class="analytics-search">Search item
+              <input id="reportSearch" type="search" placeholder="Item name or code...">
             </label>
           </div>
 
           <div class="report-summary">
-            <div class="stat-card">
-              <span>Request Lines</span>
-              <strong id="reportItemCount">—</strong>
-            </div>
-
-            <div class="stat-card">
-              <span>Completed Request Quantity</span>
-              <strong id="reportCompletedQty">—</strong>
-            </div>
+            <article class="report-stat-card"><span>Request lines</span><strong id="reportItemCount">0</strong></article>
+            <article class="report-stat-card"><span>Completed quantity</span><strong id="reportCompletedQty">0</strong></article>
+            <article class="report-stat-card"><span>Priced request value</span><strong id="reportTotalAmount">₱0.00</strong></article>
           </div>
 
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Reference</th>
-                  <th>Department</th>
-                  <th>Item</th>
-                  <th>Unit</th>
-                  <th>Requested</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-
-              <tbody id="reportTableBody">
-                <tr>
-                  <td colspan="8">No report loaded.</td>
-                </tr>
-              </tbody>
-            </table>
+          <div id="reportCards" class="report-category-list" aria-live="polite">
+            <p class="report-empty">Loading analytics...</p>
           </div>
 
-          <p class="report-note">
-            Completed request quantities are shown separately
-            from verified consumption. Actual consumption
-            requires a recorded stock-release transaction.
-          </p>
+          <p class="report-note">Completed request quantities are shown separately from verified consumption. Actual consumption requires a recorded stock-release transaction.</p>
         </div>
       </section>
-
       <!-- CONFIGURATION -->
       <section id="configurationPage" class="page">
         <div class="panel">

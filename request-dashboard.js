@@ -209,6 +209,7 @@ $("clinicSelect").addEventListener(
 
     closeRequestPreview();
     $("requestBox").hidden = true;
+    $("toggleRequestBox").setAttribute("aria-expanded", "false");
 
     renderRequestBox();
 
@@ -487,8 +488,6 @@ function addToRequestBox(itemId, quantity) {
     });
   }
 
-  $("requestBox").hidden = false;
-
   renderRequestBox();
 
   showMessage(
@@ -655,6 +654,10 @@ $("toggleRequestBox").addEventListener(
   () => {
     $("requestBox").hidden =
       !$("requestBox").hidden;
+    $("toggleRequestBox").setAttribute(
+      "aria-expanded",
+      String(!$("requestBox").hidden)
+    );
   }
 );
 
@@ -861,6 +864,7 @@ async function saveRequest() {
 
     closeRequestPreview();
     $("requestBox").hidden = true;
+    $("toggleRequestBox").setAttribute("aria-expanded", "false");
 
     $("receiverName").value = "";
 
@@ -1084,139 +1088,101 @@ async function loadAnalytics() {
 
   if (error) {
     console.error(error);
-
-    $("reportTableBody").innerHTML = `
-      <tr>
-        <td colspan="8">
-          ${escapeHTML(
-            error.message
-          )}
-        </td>
-      </tr>
-    `;
-
+    $("reportCards").innerHTML = `<p class="report-error">${escapeHTML(error.message)}</p>`;
     return;
   }
-
   state.analytics = data;
 
+  updateReportCategoryOptions();
   renderAnalytics();
 }
 
-function renderAnalytics() {
-  const search =
-    $("reportSearch")
-      .value
-      .trim()
-      .toLowerCase();
-
-  const rows =
-    state.analytics.filter(
-      (item) => {
-        const searchableText =
-          `${item.item_name || ""} ` +
-          `${item.item_code || ""}`;
-
-        return searchableText
-          .toLowerCase()
-          .includes(search);
-      }
-    );
-
-  $("reportItemCount").textContent =
-    rows.length;
-
-  const completedQuantity =
-    rows
-      .filter(
-        (item) =>
-          item.status === "done"
-      )
-      .reduce(
-        (total, item) =>
-          total +
-          toNumber(
-            item.requested_quantity
-          ),
-        0
-      );
-
-  $("reportCompletedQty").textContent =
-    formatQuantity(
-      completedQuantity
-    );
-
-  $("reportTableBody").innerHTML =
-    rows.length
-      ? rows.map(
-        (item) => `
-          <tr>
-            <td>
-              ${escapeHTML(
-                formatDate(
-                  item.requested_at
-                )
-              )}
-            </td>
-
-            <td>
-              ${escapeHTML(
-                item.reference_number
-              )}
-            </td>
-
-            <td>
-              ${escapeHTML(
-                item.department_name
-              )}
-            </td>
-
-            <td>
-              ${escapeHTML(
-                item.item_name
-              )}
-            </td>
-
-            <td>
-              ${escapeHTML(
-                item.unit
-              )}
-            </td>
-
-            <td>
-              ${formatQuantity(
-                item.requested_quantity
-              )}
-            </td>
-
-            <td>
-              ${escapeHTML(
-                item.status
-              )}
-            </td>
-
-            <td>
-              ${item.status === "pending" ? `
-                <button
-                  class="secondary-btn"
-                  data-approve-request="${item.request_id}"
-                >
-                  Approve
-                </button>
-              ` : "—"}
-            </td>
-          </tr>
-        `
-      ).join("")
-      : `
-        <tr>
-          <td colspan="8">
-            No matching records.
-          </td>
-        </tr>
-      `;
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString("en-PH", {
+    style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2
+  });
 }
 
+function getFilteredAnalytics() {
+  const search = $("reportSearch").value.trim().toLowerCase();
+  const category = $("reportCategory").value;
+  return state.analytics.filter((item) => {
+    const searchable = `${item.item_name || ""} ${item.item_code || ""} ${item.reference_number || ""} ${item.department_name || ""}`.toLowerCase();
+    return searchable.includes(search) &&
+      (!category || (item.category || "Uncategorized") === category);
+  });
+}
+
+function updateReportCategoryOptions() {
+  const select = $("reportCategory");
+  const selected = select.value;
+  const categories = [...new Set(state.analytics.map((item) => item.category || "Uncategorized"))]
+    .sort((a, b) => a.localeCompare(b));
+  select.innerHTML = '<option value="">All categories</option>' + categories
+    .map((category) => `<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`)
+    .join("");
+  select.value = categories.includes(selected) ? selected : "";
+}
+
+function groupAnalyticsByCategory(rows) {
+  const groups = new Map();
+  rows.forEach((item) => {
+    const category = item.category || "Uncategorized";
+    if (!groups.has(category)) groups.set(category, []);
+    groups.get(category).push(item);
+  });
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+}
+
+function analyticsItemAmount(item) {
+  const price = toNumber(item.unit_price);
+  if (!(price > 0)) return null;
+  return toNumber(item.requested_amount) || toNumber(item.requested_quantity) * price;
+}
+
+function renderAnalytics() {
+  const rows = getFilteredAnalytics();
+  $("reportItemCount").textContent = rows.length;
+  const completedQuantity = rows
+    .filter((item) => item.status === "done")
+    .reduce((total, item) => total + toNumber(item.requested_quantity), 0);
+  $("reportCompletedQty").textContent = formatQuantity(completedQuantity);
+  const pricedTotal = rows.reduce((total, item) => total + (analyticsItemAmount(item) ?? 0), 0);
+  $("reportTotalAmount").textContent = formatMoney(pricedTotal);
+
+  const groups = groupAnalyticsByCategory(rows);
+  $("reportCards").innerHTML = groups.length ? groups.map(([category, items]) => {
+    const categoryAmount = items.reduce((total, item) => total + (analyticsItemAmount(item) ?? 0), 0);
+    const hasPrice = items.some((item) => analyticsItemAmount(item) !== null);
+    return `
+      <section class="report-category">
+        <header class="report-category-heading">
+          <div><span class="category-kicker">CATEGORY</span><h3>${escapeHTML(category)}</h3></div>
+          <div class="category-heading-total"><span>${items.length} ${items.length === 1 ? "line" : "lines"}</span>${hasPrice ? `<strong>${formatMoney(categoryAmount)}</strong>` : ""}</div>
+        </header>
+        <div class="report-item-grid">
+          ${items.map((item) => {
+            const amount = analyticsItemAmount(item);
+            return `
+              <article class="report-item-card">
+                <div class="report-item-topline"><span class="report-status status-${escapeHTML(item.status)}">${escapeHTML(item.status)}</span><time>${escapeHTML(formatDate(item.requested_at))}</time></div>
+                <h4>${escapeHTML(item.item_name || "Unnamed item")}</h4>
+                <p class="report-item-code">${escapeHTML(item.item_code || "No item code")}</p>
+                <div class="report-item-details">
+                  <span><small>REQUESTED BY</small><strong>${escapeHTML(item.department_name || "—")}</strong></span>
+                  <span><small>REQUEST REF</small><strong>${escapeHTML(item.reference_number || "—")}</strong></span>
+                  <span><small>QUANTITY</small><strong>${formatQuantity(item.requested_quantity)} ${escapeHTML(item.unit || "")}</strong></span>
+                  ${amount !== null ? `<span><small>LINE AMOUNT</small><strong>${formatMoney(amount)}</strong></span>` : ""}
+                </div>
+                ${item.status === "pending" ? `<button type="button" class="approve-btn" data-approve-request="${Number(item.request_id)}">Approve request</button>` : ""}
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }).join("") : '<div class="report-empty"><strong>No matching requests</strong><span>Adjust the filters or search to see more results.</span></div>';
+}
 function closeQuantityDialog() {
   $("quantityModal").hidden = true;
   quantityItemId = null;
@@ -1240,38 +1206,31 @@ $("requestQuantity").addEventListener("keydown", (event) => {
   if (event.key === "Enter") $("addQuantity").click();
 });
 
-$("reportTableBody").addEventListener(
-  "click",
-  async (event) => {
-    const button = event.target.closest(
-      "[data-approve-request]"
-    );
+$("reportCards").addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-approve-request]");
+  if (!button) return;
 
-    if (!button) return;
-
-    button.disabled = true;
-    button.textContent = "Approving…";
-
-    const { error } = await db
+  button.disabled = true;
+  button.textContent = "Approving...";
+  try {
+    const { data, error } = await db
       .from("department_requests")
-      .update({
-        status: "approved",
-        approved_at: new Date().toISOString()
-      })
+      .update({ status: "approved", approved_at: new Date().toISOString() })
       .eq("id", Number(button.dataset.approveRequest))
-      .eq("status", "pending");
+      .eq("clinic_id", clinicConfig().requestClinicId)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
 
-    if (error) {
-      alert(error.message);
-      button.disabled = false;
-      button.textContent = "Approve";
-      return;
-    }
-
+    if (error) throw error;
+    if (!data) throw new Error("This request is no longer pending or your account cannot approve it.");
     await loadAnalytics();
+  } catch (error) {
+    alert(`Could not approve the request: ${error.message}`);
+    button.disabled = false;
+    button.textContent = "Approve request";
   }
-);
-
+});
 function openRequestPreview() {
   if (!state.requestBox.length) {
     showMessage("Please add at least one item to the box.", true);
@@ -1307,6 +1266,7 @@ $("cancelRequest").addEventListener("click", () => {
   $("receiverName").value = "";
   $("requestRemarks").value = "";
   $("requestBox").hidden = true;
+  $("toggleRequestBox").setAttribute("aria-expanded", "false");
   closeRequestPreview();
   showMessage("Request box cleared.");
 });
@@ -1328,53 +1288,51 @@ $("reportSearch").addEventListener(
   renderAnalytics
 );
 
-$("printReport").addEventListener(
-  "click",
-  () => {
-    const reportHTML =
-      $("reportTableBody")
-        .closest("table")
-        .outerHTML;
+$("reportCategory").addEventListener("change", renderAnalytics);
 
-    openPrintableHTML(`
-      <h2>
-        AVENTUS MEDICAL INC.
-      </h2>
-
-      <h3>
-        REQUEST ITEM REPORT
-      </h3>
-
-      <p>
-        ${escapeHTML(
-          clinicConfig().name
-        )}
-      </p>
-
-      <p>
-        Printed:
-        ${escapeHTML(
-          formatDate(
-            new Date()
-          )
-        )}
-      </p>
-
-      ${reportHTML}
-
-      <p>
-        Note: Completed requests
-        are not necessarily verified
-        stock consumption.
-      </p>
-    `);
+$("printReport").addEventListener("click", () => {
+  const rows = getFilteredAnalytics();
+  if (!rows.length) {
+    alert("There are no report rows to export with the current filters.");
+    return;
   }
-);
 
-/* ==========================================================
-   REQUEST RECEIPT
-   ========================================================== */
+  const categoriesHTML = groupAnalyticsByCategory(rows).map(([category, items]) => {
+    const pricedItems = items.filter((item) => analyticsItemAmount(item) !== null);
+    const categoryTotal = pricedItems.reduce((total, item) => total + analyticsItemAmount(item), 0);
+    const itemRows = items.map((item) => {
+      const amount = analyticsItemAmount(item);
+      return `<tr>
+        <td>${escapeHTML(formatDate(item.requested_at))}</td>
+        <td>${escapeHTML(item.reference_number || "")}</td>
+        <td>${escapeHTML(item.department_name || "")}</td>
+        <td>${escapeHTML(item.item_name || "")}</td>
+        <td>${escapeHTML(item.unit || "")}</td>
+        <td>${formatQuantity(item.requested_quantity)}</td>
+        <td>${amount === null ? "—" : formatMoney(item.unit_price)}</td>
+        <td>${amount === null ? "—" : formatMoney(amount)}</td>
+        <td>${escapeHTML(item.status || "")}</td>
+      </tr>`;
+    }).join("");
 
+    return `<section class="export-category">
+      <h3>${escapeHTML(category)}</h3>
+      <table><thead><tr><th>Date</th><th>Reference</th><th>Department</th><th>Item</th><th>Unit</th><th>Requested</th><th>Unit price</th><th>Amount</th><th>Status</th></tr></thead><tbody>${itemRows}</tbody></table>
+      ${pricedItems.length ? `<p class="category-total">Category total: <strong>${formatMoney(categoryTotal)}</strong></p>` : ""}
+    </section>`;
+  }).join("");
+
+  const pricedTotal = rows.reduce((total, item) => total + (analyticsItemAmount(item) ?? 0), 0);
+  openPrintableHTML(`
+    <h2>AVENTUS MEDICAL INC.</h2>
+    <h3>REQUEST ITEM REPORT</h3>
+    <p>${escapeHTML(clinicConfig().name)} · Printed ${escapeHTML(formatDate(new Date()))}</p>
+    <p>${rows.length} request lines${pricedTotal ? ` · Priced request value ${formatMoney(pricedTotal)}` : ""}</p>
+    ${categoriesHTML}
+    <p>Completed request quantities are shown separately from verified consumption.</p>
+    <style>.export-category{margin:24px 0;break-inside:avoid}.export-category h3{text-align:left;background:#eef3f8;padding:8px}.export-category table{font-size:9px}.category-total{text-align:right;margin:8px 0;font-size:13px}</style>
+  `);
+});
 async function openRequestReceipt(
   requestId
 ) {
