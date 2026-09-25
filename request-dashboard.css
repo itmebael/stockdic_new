@@ -930,6 +930,10 @@ td {
   font-size: 18px !important;
 }
 
+.audit-item-slip .audit-recount {
+  margin-top: 15px;
+}
+
 .receipt-title {
   text-align: center;
   font-size: 13px;

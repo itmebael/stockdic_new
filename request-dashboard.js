@@ -1752,31 +1752,27 @@ $("printSelectedAudit").addEventListener(
       return;
     }
 
-    const slips = selectedItems.map((item) => [
-      '<section class="audit-batch-slip">',
-      "<h2>AVENTUS MEDICAL INC.</h2>",
-      "<h3>STOCK AUDIT</h3><hr>",
-      "<p><strong>Category:</strong> " + escapeHTML(item.category) + "</p>",
-      "<p><strong>Name:</strong> " + escapeHTML(item.name) + "</p>",
-      "<p><strong>Unit:</strong> " + escapeHTML(item.unit) + "</p>",
-      "<p><strong>Balance:</strong> " + formatQuantity(item.balance) + "</p>",
-      "<p><strong>Date:</strong> " + escapeHTML(formatDate(new Date())) + "</p>",
-      "<p><strong>Counted by:</strong> Abel Redoblado</p>",
-      '<p class="audit-recount"><strong>Recounted by:</strong> ____________________</p>',
+    const printedDate =
+      escapeHTML(formatDate(new Date()));
+    const itemSlips = selectedItems.map((item) => [
+      '<section class="audit-item-slip">',
+      '<div class="receipt-title">AVENTUS MEDICAL INC.<br>STOCK AUDIT</div>',
+      '<div class="receipt-divider"></div>',
+      "<div>Category: " + escapeHTML(item.category) + "</div>",
+      "<div>Name: " + escapeHTML(item.name) + "</div>",
+      "<div>Unit: " + escapeHTML(item.unit) + "</div>",
+      "<div>Balance: " + formatQuantity(item.balance) + "</div>",
+      "<div>Date: " + printedDate + "</div>",
+      "<div>Counted by: Abel Redoblado</div>",
+      '<div class="audit-recount">Recounted by: ____________________</div>',
       "</section>"
-    ].join("")).join("");
+    ].join("")).join('<div class="receipt-divider"></div>');
 
-    const styles = [
-      "<style>",
-      ".audit-batch-slip{min-height:240mm;box-sizing:border-box;padding:18mm 12mm;page-break-after:always;font:18px/1.45 'Courier New',Courier,monospace}",
-      ".audit-batch-slip h2,.audit-batch-slip h3{text-align:center;margin:0 0 10px}",
-      ".audit-batch-slip p{margin:8px 0}",
-      ".audit-recount{margin-top:30px!important}",
-      "@page{size:A4;margin:8mm}",
-      "</style>"
-    ].join("");
-
-    openPrintableHTML(styles + slips);
+    $("receiptPrintArea").classList.add("audit-print");
+    $("receiptPrintArea").innerHTML = itemSlips;
+    $("receiptPrintArea").dataset.imageFilename =
+      "stock-audit-selected-items";
+    $("receiptModal").hidden = false;
   }
 );
 
