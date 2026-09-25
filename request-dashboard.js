@@ -2254,6 +2254,21 @@ $("editItemButton").addEventListener(
         </h3>
 
         <label>
+          Filter by Category
+
+          <select name="category_filter">
+            <option value="">All categories</option>
+            ${[...new Set(state.stock.map((item) => item.category))]
+              .sort((a, b) => a.localeCompare(b))
+              .map((category) => `
+                <option value="${escapeHTML(category)}">
+                  ${escapeHTML(category)}
+                </option>
+              `).join("")}
+          </select>
+        </label>
+
+        <label>
           Select Item
 
           <select
@@ -2339,35 +2354,48 @@ $("editItemButton").addEventListener(
     const form =
       $("editStockItemForm");
 
+    function populateEditItemFields(item) {
+      form.elements.description.value = item?.name || "";
+      form.elements.category.value = item?.category || "";
+      form.elements.unit.value = item?.unit || "";
+      form.elements.ending_quantity.value = item?.balance ?? "";
+      form.elements.unit_price.value = item?.price ?? "";
+    }
+
+    function refreshEditItemOptions() {
+      const selectedId = form.elements.id.value;
+      const selectedCategory = form.elements.category_filter.value;
+      const availableItems = state.stock.filter(
+        (item) => !selectedCategory || item.category === selectedCategory
+      );
+
+      form.elements.id.innerHTML =
+        '<option value="">Select an item</option>' +
+        availableItems.map((item) =>
+          '<option value="' + item.id + '">' +
+            escapeHTML(item.name) +
+          '</option>'
+        ).join("");
+
+      const selectedItem = availableItems.find(
+        (item) => String(item.id) === selectedId
+      );
+      form.elements.id.value = selectedItem ? selectedId : "";
+      populateEditItemFields(selectedItem);
+    }
+
+    form.elements.category_filter.addEventListener(
+      "change",
+      refreshEditItemOptions
+    );
+
     form.elements.id.addEventListener(
       "change",
       () => {
-        const item =
-          state.stock.find(
-            (entry) =>
-              entry.id === Number(
-                form.elements.id.value
-              )
-          );
-
-        if (!item) {
-          return;
-        }
-
-        form.elements.description.value =
-          item.name;
-
-        form.elements.category.value =
-          item.category;
-
-        form.elements.unit.value =
-          item.unit;
-
-        form.elements.ending_quantity.value =
-          item.balance;
-
-        form.elements.unit_price.value =
-          item.price;
+        const item = state.stock.find(
+          (entry) => entry.id === Number(form.elements.id.value)
+        );
+        populateEditItemFields(item);
       }
     );
 
