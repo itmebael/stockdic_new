@@ -1404,6 +1404,7 @@ async function openRequestReceipt(
       0
     );
 
+  $("receiptPrintArea").classList.remove("audit-print");
   $("receiptPrintArea").innerHTML = `
     <div class="receipt-title">
       AVENTUS MEDICAL INC.
@@ -1639,6 +1640,7 @@ $("auditGrid").addEventListener(
       return;
     }
 
+    $("receiptPrintArea").classList.add("audit-print");
     $("receiptPrintArea").innerHTML = `
       <div class="receipt-title">
         AVENTUS MEDICAL INC.

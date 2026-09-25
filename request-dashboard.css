@@ -1158,6 +1158,10 @@ td {
     color: black !important;
   }
 
+  #receiptPrintArea.audit-print {
+    font-size: 33px !important;
+  }
+
   .thermal-receipt * {
     color: black !important;
     font-family: "Courier New", Courier, monospace !important;
