@@ -2190,6 +2190,18 @@ $("editItemButton").addEventListener(
         </label>
 
         <label>
+          Quantity on Hand
+
+          <input
+            name="ending_quantity"
+            type="number"
+            min="0"
+            step="any"
+            required
+          >
+        </label>
+
+        <label>
           Unit Price
 
           <input
@@ -2237,6 +2249,9 @@ $("editItemButton").addEventListener(
         form.elements.unit.value =
           item.unit;
 
+        form.elements.ending_quantity.value =
+          item.balance;
+
         form.elements.unit_price.value =
           item.price;
       }
@@ -2254,6 +2269,19 @@ $("editItemButton").addEventListener(
             ).entries()
           );
 
+        const quantity = Number(values.ending_quantity);
+        const unitPrice = Number(values.unit_price);
+
+        if (
+          !Number.isFinite(quantity) ||
+          quantity < 0 ||
+          !Number.isFinite(unitPrice) ||
+          unitPrice < 0
+        ) {
+          alert("Quantity and unit price must be valid non-negative numbers.");
+          return;
+        }
+
         const { error } =
           await db
             .from(
@@ -2270,9 +2298,13 @@ $("editItemButton").addEventListener(
                 values.unit.trim(),
 
               unit_price:
-                Number(
-                  values.unit_price
-                )
+                unitPrice,
+
+              ending_quantity:
+                quantity,
+
+              ending_amount:
+                quantity * unitPrice
             })
             .eq(
               "id",
