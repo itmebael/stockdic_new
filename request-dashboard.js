@@ -43,10 +43,39 @@ const CLINICS = {
   }
 };
 
+const CLINIC_STORAGE_KEY = "stockdic-selected-clinic";
+
+function getRememberedClinic() {
+  try {
+    const clinic = localStorage.getItem(CLINIC_STORAGE_KEY);
+    return Object.prototype.hasOwnProperty.call(CLINICS, clinic)
+      ? clinic
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberClinic(clinic) {
+  try {
+    localStorage.setItem(CLINIC_STORAGE_KEY, clinic);
+  } catch (error) {
+    console.warn("Could not save the selected clinic on this device.", error);
+  }
+}
+
+function clearRememberedClinic() {
+  try {
+    localStorage.removeItem(CLINIC_STORAGE_KEY);
+  } catch (error) {
+    console.warn("Could not clear the saved clinic on this device.", error);
+  }
+}
+
 /* APPLICATION STATE */
 
 const state = {
-  clinic: "pasay",
+  clinic: getRememberedClinic() || "pasay",
   page: "dashboard",
   stock: [],
   departments: [],
@@ -106,9 +135,20 @@ function showError(error) {
   console.error(error);
 
   showMessage(
-    error?.message || String(error),
+    databaseFailureMessage(error),
     true
   );
+}
+
+function databaseFailureMessage(error) {
+  if (
+    error instanceof TypeError &&
+    /fetch/i.test(error.message || "")
+  ) {
+    return "Could not reach the database. Check your internet connection and try again.";
+  }
+
+  return error?.message || String(error);
 }
 
 function normalizeStock(row) {
@@ -204,6 +244,7 @@ $("clinicSelect").addEventListener(
   "change",
   async (event) => {
     state.clinic = event.target.value;
+    rememberClinic(state.clinic);
 
     state.stock = [];
     state.requestBox = [];
@@ -241,19 +282,27 @@ async function loadStock() {
     ;
     from += pageSize
   ) {
-    const { data, error } = await db
-      .from(table)
-      .select(
-        "id,item_id,description,category,unit," +
-        "ending_quantity,unit_price"
-      )
-      .order("id", {
-        ascending: true
-      })
-      .range(
-        from,
-        from + pageSize - 1
-      );
+    let result;
+    try {
+      result = await db
+        .from(table)
+        .select(
+          "id,item_id,description,category,unit," +
+          "ending_quantity,unit_price"
+        )
+        .order("id", {
+          ascending: true
+        })
+        .range(
+          from,
+          from + pageSize - 1
+        );
+    } catch (error) {
+      showError(error);
+      return;
+    }
+
+    const { data, error } = result;
 
     if (error) {
       showError(error);
@@ -1757,6 +1806,19 @@ $("auditGrid").addEventListener(
   }
 );
 
+$("logoutClinic").addEventListener(
+  "click",
+  () => {
+    const clinicName = clinicConfig().name;
+    if (!window.confirm(`Log out of ${clinicName} on this device?`)) {
+      return;
+    }
+
+    clearRememberedClinic();
+    window.location.reload();
+  }
+);
+
 function updateSelectedAuditButton() {
   const selectedCount = selectedAuditIds.size;
   const button = $("printSelectedAudit");
@@ -2282,40 +2344,29 @@ $("editItemButton").addEventListener(
           return;
         }
 
-        const { error } =
-          await db
-            .from(
-              clinicConfig().table
-            )
+        let updateError;
+        try {
+          const result = await db
+            .from(clinicConfig().table)
             .update({
-              description:
-                values.description.trim(),
-
-              category:
-                values.category.trim(),
-
-              unit:
-                values.unit.trim(),
-
-              unit_price:
-                unitPrice,
-
-              ending_quantity:
-                quantity,
-
-              ending_amount:
-                quantity * unitPrice
+              description: values.description.trim(),
+              category: values.category.trim(),
+              unit: values.unit.trim(),
+              unit_price: unitPrice,
+              ending_quantity: quantity,
+              ending_amount: quantity * unitPrice
             })
-            .eq(
-              "id",
-              Number(
-                values.id
-              )
-            );
+            .eq("id", Number(values.id));
+          updateError = result.error;
+        } catch (error) {
+          console.error("Inventory update request failed.", error);
+          alert(databaseFailureMessage(error));
+          return;
+        }
 
-        if (error) {
+        if (updateError) {
           alert(
-            error.message
+            databaseFailureMessage(updateError)
           );
 
           return;
@@ -2325,7 +2376,12 @@ $("editItemButton").addEventListener(
           "Item updated successfully."
         );
 
-        await loadStock();
+        try {
+          await loadStock();
+        } catch (error) {
+          console.error("Inventory refresh failed after saving.", error);
+          alert(databaseFailureMessage(error));
+        }
       }
     );
   }
@@ -2367,8 +2423,7 @@ $("manageStockButton").addEventListener(
    ========================================================== */
 
 async function initializeDashboard() {
-  state.clinic =
-    $("clinicSelect").value;
+  $("clinicSelect").value = state.clinic;
 
   await Promise.all([
     loadStock(),
