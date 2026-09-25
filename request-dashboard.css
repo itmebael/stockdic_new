@@ -909,6 +909,11 @@ td {
   color: black;
 }
 
+.thermal-receipt.audit-print,
+.thermal-receipt.audit-print * {
+  font-size: 112px !important;
+}
+
 .receipt-title {
   text-align: center;
   font-size: 13px;
@@ -1156,10 +1161,6 @@ td {
     font-weight: 700 !important;
     line-height: 1.35 !important;
     color: black !important;
-  }
-
-  #receiptPrintArea.audit-print {
-    font-size: 112px !important;
   }
 
   .thermal-receipt * {
