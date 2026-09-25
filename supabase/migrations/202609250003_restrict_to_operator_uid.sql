@@ -1,62 +1,5 @@
--- Protect dashboard data behind the single Supabase Auth operator account.
--- Access is restricted to the single operator account UID.
-
-grant usage on schema public to authenticated;
-
-do $$
-declare
-  sequence_name regclass;
-begin
-  foreach sequence_name in array array[
-    pg_get_serial_sequence('public.department_requests', 'id')::regclass,
-    pg_get_serial_sequence('public.request_items', 'id')::regclass
-  ] loop
-    if sequence_name is not null then
-      execute format(
-        'grant usage, select on sequence %s to authenticated',
-        sequence_name
-      );
-    end if;
-  end loop;
-end
-$$;
-
--- Inventory is readable by the signed-in operator and editable from the app.
-grant select on table
-  public.psy_stock,
-  public.ane_stock,
-  public.mnl_stock
-to authenticated;
-
-grant update (
-  description,
-  category,
-  unit,
-  unit_price,
-  ending_quantity,
-  ending_amount
-) on table public.psy_stock, public.ane_stock, public.mnl_stock
-to authenticated;
-
-revoke update on table
-  public.psy_stock,
-  public.ane_stock,
-  public.mnl_stock
-from anon, public;
-
-revoke update (
-  description,
-  category,
-  unit,
-  unit_price,
-  ending_quantity,
-  ending_amount
-) on table public.psy_stock, public.ane_stock, public.mnl_stock
-from anon, public;
-
-alter table public.psy_stock enable row level security;
-alter table public.ane_stock enable row level security;
-alter table public.mnl_stock enable row level security;
+-- Restrict the policies created by 202609250002 to the single operator account.
+-- This also updates installations that already applied migration 002.
 
 drop policy if exists "operator can read psy stock" on public.psy_stock;
 create policy "operator can read psy stock"
@@ -87,19 +30,6 @@ create policy "operator can update mnl stock"
   on public.mnl_stock for update to authenticated
   using (auth.uid() = '5dbce11b-a2ee-405f-9aba-06c127e52e1c'::uuid)
   with check (auth.uid() = '5dbce11b-a2ee-405f-9aba-06c127e52e1c'::uuid);
-
--- Keep the request dashboard features available after authentication is added.
-grant select on table public.departments to authenticated;
-grant select, insert, update on table public.department_requests to authenticated;
-grant select, insert on table public.request_items to authenticated;
-grant select on table public.stock_items, public.categories to authenticated;
-grant select on table public.request_items_analytics to authenticated;
-
-alter table public.departments enable row level security;
-alter table public.department_requests enable row level security;
-alter table public.request_items enable row level security;
-alter table public.stock_items enable row level security;
-alter table public.categories enable row level security;
 
 drop policy if exists "operator can read departments" on public.departments;
 create policy "operator can read departments"
