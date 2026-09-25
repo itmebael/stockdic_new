@@ -1600,6 +1600,11 @@ function renderAudit() {
               )}
             </span>
 
+            <label class="audit-select-label">
+              <input type="checkbox" data-audit-select="${item.id}">
+              Select for batch print
+            </label>
+
             <button
               class="primary-btn"
               data-audit-id="${item.id}"
@@ -1654,6 +1659,11 @@ $("auditGrid").addEventListener(
       </div>
 
       <div>
+        Category:
+        ${escapeHTML(item.category)}
+      </div>
+
+      <div>
         Name:
         ${escapeHTML(
           item.name
@@ -1703,6 +1713,70 @@ $("auditGrid").addEventListener(
 
     $("receiptModal").hidden =
       false;
+  }
+);
+
+function updateSelectedAuditButton() {
+  const selectedCount =
+    $("auditGrid").querySelectorAll(
+      "[data-audit-select]:checked"
+    ).length;
+  const button = $("printSelectedAudit");
+
+  button.disabled = selectedCount === 0;
+  button.textContent =
+    "Print selected (" + selectedCount + ")";
+}
+
+$("auditGrid").addEventListener(
+  "change",
+  (event) => {
+    if (event.target.matches("[data-audit-select]")) {
+      updateSelectedAuditButton();
+    }
+  }
+);
+
+$("printSelectedAudit").addEventListener(
+  "click",
+  () => {
+    const selectedIds = new Set(
+      [...$("auditGrid").querySelectorAll("[data-audit-select]:checked")]
+        .map((checkbox) => Number(checkbox.dataset.auditSelect))
+    );
+    const selectedItems = state.stock.filter(
+      (item) => selectedIds.has(Number(item.id))
+    );
+
+    if (!selectedItems.length) {
+      return;
+    }
+
+    const slips = selectedItems.map((item) => [
+      '<section class="audit-batch-slip">',
+      "<h2>AVENTUS MEDICAL INC.</h2>",
+      "<h3>STOCK AUDIT</h3><hr>",
+      "<p><strong>Category:</strong> " + escapeHTML(item.category) + "</p>",
+      "<p><strong>Name:</strong> " + escapeHTML(item.name) + "</p>",
+      "<p><strong>Unit:</strong> " + escapeHTML(item.unit) + "</p>",
+      "<p><strong>Balance:</strong> " + formatQuantity(item.balance) + "</p>",
+      "<p><strong>Date:</strong> " + escapeHTML(formatDate(new Date())) + "</p>",
+      "<p><strong>Counted by:</strong> Abel Redoblado</p>",
+      '<p class="audit-recount"><strong>Recounted by:</strong> ____________________</p>',
+      "</section>"
+    ].join("")).join("");
+
+    const styles = [
+      "<style>",
+      ".audit-batch-slip{min-height:240mm;box-sizing:border-box;padding:18mm 12mm;page-break-after:always;font:18px/1.45 'Courier New',Courier,monospace}",
+      ".audit-batch-slip h2,.audit-batch-slip h3{text-align:center;margin:0 0 10px}",
+      ".audit-batch-slip p{margin:8px 0}",
+      ".audit-recount{margin-top:30px!important}",
+      "@page{size:A4;margin:8mm}",
+      "</style>"
+    ].join("");
+
+    openPrintableHTML(styles + slips);
   }
 );
 
