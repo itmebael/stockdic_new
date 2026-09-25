@@ -7,7 +7,24 @@
   <link rel="stylesheet" href="request-dashboard.css">
 </head>
 <body>
-  <div class="app">
+  <section class="auth-gate" id="authGate">
+    <form class="auth-card" id="loginForm">
+      <h1>Stock Request System</h1>
+      <p>Sign in with the operator account created in Supabase.</p>
+      <label>
+        Email
+        <input name="email" type="email" autocomplete="username" required>
+      </label>
+      <label>
+        Password
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+      <button class="primary-btn" id="loginButton" type="submit">Sign in</button>
+    </form>
+  </section>
+
+  <div class="app" id="appShell" hidden>
 
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">

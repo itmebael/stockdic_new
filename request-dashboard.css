@@ -56,6 +56,62 @@ button:disabled {
   display: flex;
 }
 
+.app[hidden] {
+  display: none;
+}
+
+.auth-gate {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 20px;
+  background: #f3f6fa;
+}
+
+.auth-gate[hidden] {
+  display: none;
+}
+
+.auth-card {
+  display: grid;
+  gap: 15px;
+  width: min(100%, 390px);
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.auth-card h1,
+.auth-card p {
+  margin: 0;
+}
+
+.auth-card > p:not(.auth-message) {
+  color: var(--muted);
+}
+
+.auth-card label {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.auth-card input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.auth-message {
+  min-height: 20px;
+  color: var(--danger);
+  font-size: 13px;
+}
+
 .sidebar {
   width: 250px;
   flex-shrink: 0;

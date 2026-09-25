@@ -1808,14 +1808,66 @@ $("auditGrid").addEventListener(
 
 $("logoutClinic").addEventListener(
   "click",
-  () => {
+  async () => {
     const clinicName = clinicConfig().name;
     if (!window.confirm(`Log out of ${clinicName} on this device?`)) {
       return;
     }
 
+    let error;
+    try {
+      ({ error } = await db.auth.signOut({ scope: "local" }));
+    } catch (requestError) {
+      alert(databaseFailureMessage(requestError));
+      return;
+    }
+    if (error) {
+      alert(`Could not sign out: ${error.message}`);
+      return;
+    }
+
     clearRememberedClinic();
     window.location.reload();
+  }
+);
+
+$("loginForm").addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const button = $("loginButton");
+    const message = $("authMessage");
+    button.disabled = true;
+    button.textContent = "Signing in...";
+    message.textContent = "";
+
+    const values = Object.fromEntries(new FormData(form).entries());
+    let error;
+    try {
+      ({ error } = await db.auth.signInWithPassword({
+        email: values.email.trim(),
+        password: values.password
+      }));
+    } catch (requestError) {
+      message.textContent = databaseFailureMessage(requestError);
+      button.disabled = false;
+      button.textContent = "Sign in";
+      return;
+    }
+
+    if (error) {
+      message.textContent = error.message;
+      button.disabled = false;
+      button.textContent = "Sign in";
+      return;
+    }
+
+    form.reset();
+    await initializeDashboard();
+    button.disabled = false;
+    button.textContent = "Sign in";
   }
 );
 
@@ -2423,12 +2475,42 @@ $("manageStockButton").addEventListener(
    ========================================================== */
 
 async function initializeDashboard() {
+  let sessionResult;
+  try {
+    sessionResult = await db.auth.getSession();
+  } catch (requestError) {
+    $("authMessage").textContent = databaseFailureMessage(requestError);
+    return;
+  }
+
+  const { data, error } = sessionResult;
+  if (error) {
+    $("authMessage").textContent = error.message;
+    return;
+  }
+
+  if (!data.session) {
+    $("authGate").hidden = false;
+    $("appShell").hidden = true;
+    return;
+  }
+
+  $("authGate").hidden = true;
+  $("appShell").hidden = false;
+  state.clinic = getRememberedClinic() || state.clinic;
   $("clinicSelect").value = state.clinic;
 
-  await Promise.all([
+  const results = await Promise.allSettled([
     loadStock(),
     loadDepartments()
   ]);
+
+  const failedLoad = results.find(
+    (result) => result.status === "rejected"
+  );
+  if (failedLoad) {
+    showError(failedLoad.reason);
+  }
 
   navigate(
     "dashboard"
