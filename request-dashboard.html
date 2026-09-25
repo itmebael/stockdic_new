@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aventus Medical Inc. | Request Dashboard</title>
+  <link rel="stylesheet" href="request-dashboard.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <h2>AVENTUS</h2>
+        <p>MEDICAL INC.</p>
+      </div>
+
+      <nav class="navigation">
+        <button class="nav-btn active" data-page="dashboard">
+          Dashboard
+        </button>
+
+        <button class="nav-btn" data-page="requests">
+          Request Items
+        </button>
+
+        <button class="nav-btn" data-page="analytics">
+          Analytics & Reports
+        </button>
+
+        <button class="nav-btn" data-page="configuration">
+          Configuration
+        </button>
+
+        <button class="nav-btn" data-page="audit">
+          Stock Audit
+        </button>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+      <header class="topbar">
+        <button id="menuToggle" class="menu-toggle"
+                aria-label="Toggle navigation">
+          ☰
+        </button>
+
+        <div>
+          <h1 id="pageTitle">Request Dashboard</h1>
+          <p>Stock Request Management System</p>
+        </div>
+
+        <select id="clinicSelect" aria-label="Select clinic">
+          <option value="pasay">Pasay Clinic</option>
+          <option value="ane">ANE Clinic</option>
+          <option value="manila">Manila Clinic</option>
+        </select>
+      </header>
+
+      <!-- DASHBOARD -->
+      <section id="dashboardPage" class="page active">
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>Total Requests</span>
+            <strong id="totalRequests">—</strong>
+          </article>
+
+          <article class="stat-card">
+            <span>Pending Requests</span>
+            <strong id="pendingRequests">—</strong>
+          </article>
+
+          <article class="stat-card">
+            <span>Completed Requests</span>
+            <strong id="completedRequests">—</strong>
+          </article>
+
+          <article class="stat-card">
+            <span>Requested Item Types</span>
+            <strong id="requestedItemTypes">—</strong>
+          </article>
+        </div>
+
+        <div class="panel">
+          <div class="panel-heading">
+            <h2>Recent Requests</h2>
+            <button class="primary-btn" id="openNewRequest">
+              + New Request
+            </button>
+          </div>
+
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Reference</th>
+                  <th>Department</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="recentRequestsBody">
+                <tr>
+                  <td colspan="5">Loading requests...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REQUEST ITEM PAGE -->
+      <section id="requestsPage" class="page">
+        <div class="panel">
+
+          <div class="panel-heading">
+            <div>
+              <h2>Request Items</h2>
+              <p>Select items from the current clinic's stock.</p>
+            </div>
+
+            <button class="box-btn" id="toggleRequestBox">
+              Request Box (<span id="boxCount">0</span>)
+            </button>
+          </div>
+
+          <div class="filter-grid">
+            <label>
+              Requester / Department
+              <select id="departmentSelect">
+                <option value="">Select department</option>
+              </select>
+            </label>
+
+            <label>
+              Category
+              <select id="categorySelect">
+                <option value="">All categories</option>
+              </select>
+            </label>
+
+            <label class="search-field">
+              Search Item
+              <input
+                id="itemSearch"
+                type="search"
+                placeholder="Search item name or code..."
+              >
+            </label>
+          </div>
+
+          <div class="request-box" id="requestBox" hidden>
+            <h3>Selected Items</h3>
+
+            <div id="requestBoxItems">
+              No items selected.
+            </div>
+
+            <label>
+              Receiver Name
+              <input
+                id="receiverName"
+                type="text"
+                placeholder="Enter receiver's name"
+              >
+            </label>
+
+            <label>
+              Remarks
+              <textarea
+                id="requestRemarks"
+                rows="2"
+                placeholder="Optional remarks"
+              ></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button type="button" class="primary-btn" id="previewRequest">
+                Preview Request
+              </button>
+              <button type="button" class="secondary-btn" id="cancelRequest">
+                Cancel Request
+              </button>
+            </div>
+          </div>
+
+          <div class="section-heading">
+            <h3>Available Stock Items</h3>
+            <span id="itemCount">0 items</span>
+          </div>
+
+          <div class="item-grid" id="itemGrid">
+            <p>Loading stock items...</p>
+          </div>
+
+          <p class="form-message" id="requestMessage"
+             role="status"></p>
+
+          <div class="form-actions">
+            <button class="save-btn" id="saveRequest">
+              Preview Request Box
+            </button>
+
+            <button class="secondary-btn" id="backToRequests">
+              Back to Requests
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANALYTICS AND REPORTS -->
+      <section id="analyticsPage" class="page">
+        <div class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Analytics & Reports</h2>
+              <p>Request history and monthly stock consumption.</p>
+            </div>
+
+            <button class="secondary-btn" id="printReport">
+              Print Report
+            </button>
+          </div>
+
+          <div class="filter-grid">
+            <label>
+              From Date
+              <input id="reportDateFrom" type="date">
+            </label>
+
+            <label>
+              To Date
+              <input id="reportDateTo" type="date">
+            </label>
+
+            <label>
+              Status
+              <select id="reportStatus">
+                <option value="">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="done">Done</option>
+              </select>
+            </label>
+
+            <label>
+              Search Item
+              <input
+                id="reportSearch"
+                type="search"
+                placeholder="Item name or code..."
+              >
+            </label>
+          </div>
+
+          <div class="report-summary">
+            <div class="stat-card">
+              <span>Request Lines</span>
+              <strong id="reportItemCount">—</strong>
+            </div>
+
+            <div class="stat-card">
+              <span>Completed Request Quantity</span>
+              <strong id="reportCompletedQty">—</strong>
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Reference</th>
+                  <th>Department</th>
+                  <th>Item</th>
+                  <th>Unit</th>
+                  <th>Requested</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody id="reportTableBody">
+                <tr>
+                  <td colspan="8">No report loaded.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="report-note">
+            Completed request quantities are shown separately
+            from verified consumption. Actual consumption
+            requires a recorded stock-release transaction.
+          </p>
+        </div>
+      </section>
+
+      <!-- CONFIGURATION -->
+      <section id="configurationPage" class="page">
+        <div class="panel">
+          <h2>Configuration</h2>
+          <p>
+            Manage items and stock for the selected clinic.
+          </p>
+
+          <div class="config-grid">
+            <article class="config-card">
+              <h3>Add Item</h3>
+              <p>Create a new clinic inventory item.</p>
+              <button id="addItemButton" class="primary-btn">
+                Add Item
+              </button>
+            </article>
+
+            <article class="config-card">
+              <h3>Edit Item</h3>
+              <p>Update item information and unit price.</p>
+              <button id="editItemButton" class="primary-btn">
+                Edit Item
+              </button>
+            </article>
+
+            <article class="config-card">
+              <h3>Stock Management</h3>
+              <p>Record incoming and outgoing quantities.</p>
+              <button id="manageStockButton" class="primary-btn">
+                Manage Stock
+              </button>
+            </article>
+          </div>
+
+          <div id="configurationForm"></div>
+        </div>
+      </section>
+
+      <!-- AUDIT -->
+      <section id="auditPage" class="page">
+        <div class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Stock Audit</h2>
+              <p>Print an individual counting slip for each item.</p>
+            </div>
+          </div>
+
+          <div class="item-grid" id="auditGrid">
+            <p>Loading audit items...</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="quantityModal" class="modal" hidden>
+    <div class="modal-content request-dialog">
+      <button type="button" class="dialog-close" id="closeQuantity" aria-label="Close">×</button>
+      <h2 id="quantityItemName">Add item</h2>
+      <p id="quantityItemDetails"></p>
+      <label for="requestQuantity">Quantity</label>
+      <input id="requestQuantity" type="number" min="0.01" step="any" value="1">
+      <div class="receipt-actions">
+        <button type="button" class="secondary-btn" id="cancelQuantity">Cancel</button>
+        <button type="button" class="primary-btn" id="addQuantity">Add to Box</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="requestPreviewModal" class="modal" hidden>
+    <div class="modal-content request-preview-dialog">
+      <button type="button" class="dialog-close" id="closeRequestPreview" aria-label="Close">×</button>
+      <h2>Request Preview</h2>
+      <div id="requestPreviewContent"></div>
+      <div class="receipt-actions">
+        <button type="button" class="secondary-btn" id="cancelPreview">Cancel</button>
+        <button type="button" class="primary-btn" id="confirmSaveRequest">Save Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- THERMAL RECEIPT MODAL -->
+  <div id="receiptModal" class="modal" hidden>
+    <div class="modal-content">
+      <div id="receiptPrintArea" class="thermal-receipt"></div>
+
+      <div class="receipt-actions">
+        <button id="closeReceipt" class="secondary-btn">
+          Cancel
+        </button>
+
+        <button id="printReceipt" class="primary-btn">
+          Print Receipt
+        </button>
+        <button type="button" id="saveReceiptImage" class="secondary-btn">
+          Save Receipt as Image
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="request-dashboard.js"></script>
+</body>
+</html>
