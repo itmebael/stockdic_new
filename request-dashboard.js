@@ -129,6 +129,7 @@ function normalizeStock(row) {
 
 function navigate(page) {
   state.page = page;
+  updateSelectedAuditButton();
 
   document.querySelectorAll(".page").forEach(
     (element) => {
@@ -1569,10 +1570,39 @@ $("saveReceiptImage").addEventListener("click", async () => {
    STOCK AUDIT
    ========================================================== */
 
+const selectedAuditIds = new Set();
+
 function renderAudit() {
+  for (const selectedId of selectedAuditIds) {
+    if (!state.stock.some((item) => Number(item.id) === selectedId)) {
+      selectedAuditIds.delete(selectedId);
+    }
+  }
+
+  const categoryFilter = $("auditCategoryFilter");
+  const previousCategory = categoryFilter.value;
+  const categories = [...new Set(
+    state.stock.map((item) => item.category).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b));
+
+  categoryFilter.innerHTML =
+    '<option value="">All categories</option>' +
+    categories.map((category) =>
+      '<option value="' + escapeHTML(category) + '">' +
+        escapeHTML(category) +
+      '</option>'
+    ).join("");
+  categoryFilter.value = categories.includes(previousCategory)
+    ? previousCategory
+    : "";
+
+  const visibleItems = categoryFilter.value
+    ? state.stock.filter((item) => item.category === categoryFilter.value)
+    : state.stock;
+
   $("auditGrid").innerHTML =
-    state.stock.length
-      ? state.stock.map(
+    visibleItems.length
+      ? visibleItems.map(
         (item) => `
           <article class="item-card">
             <span class="item-category">
@@ -1601,7 +1631,11 @@ function renderAudit() {
             </span>
 
             <label class="audit-select-label">
-              <input type="checkbox" data-audit-select="${item.id}">
+              <input
+                type="checkbox"
+                data-audit-select="${item.id}"
+                ${selectedAuditIds.has(Number(item.id)) ? "checked" : ""}
+              >
               Select for batch print
             </label>
 
@@ -1616,10 +1650,17 @@ function renderAudit() {
       ).join("")
       : `
         <p>
-          No inventory items found.
+          ${state.stock.length ? "No items in this category." : "No inventory items found."}
         </p>
       `;
+
+  updateSelectedAuditButton();
 }
+
+$("auditCategoryFilter").addEventListener(
+  "change",
+  renderAudit
+);
 
 $("auditGrid").addEventListener(
   "click",
@@ -1717,35 +1758,42 @@ $("auditGrid").addEventListener(
 );
 
 function updateSelectedAuditButton() {
-  const selectedCount =
-    $("auditGrid").querySelectorAll(
-      "[data-audit-select]:checked"
-    ).length;
+  const selectedCount = selectedAuditIds.size;
   const button = $("printSelectedAudit");
+  const floatingButton = $("printSelectedAuditFloat");
 
   button.disabled = selectedCount === 0;
   button.textContent =
     "Print selected (" + selectedCount + ")";
+  floatingButton.hidden = selectedCount === 0 || state.page !== "audit";
+  $("auditPrintFloatCount").textContent = selectedCount;
 }
 
 $("auditGrid").addEventListener(
   "change",
   (event) => {
     if (event.target.matches("[data-audit-select]")) {
+      const itemId = Number(event.target.dataset.auditSelect);
+      if (event.target.checked) {
+        selectedAuditIds.add(itemId);
+      } else {
+        selectedAuditIds.delete(itemId);
+      }
       updateSelectedAuditButton();
     }
   }
 );
 
+$("printSelectedAuditFloat").addEventListener(
+  "click",
+  () => $("printSelectedAudit").click()
+);
+
 $("printSelectedAudit").addEventListener(
   "click",
   () => {
-    const selectedIds = new Set(
-      [...$("auditGrid").querySelectorAll("[data-audit-select]:checked")]
-        .map((checkbox) => Number(checkbox.dataset.auditSelect))
-    );
     const selectedItems = state.stock.filter(
-      (item) => selectedIds.has(Number(item.id))
+      (item) => selectedAuditIds.has(Number(item.id))
     );
 
     if (!selectedItems.length) {
