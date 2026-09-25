@@ -377,7 +377,7 @@ textarea {
 
 .section-heading span {
   color: var(--muted);
-  font-size: 18px;
+  font-size: 12px;
 }
 
 /* THREE-COLUMN ITEM GRID */
@@ -898,7 +898,7 @@ td {
   background: white;
   color: black;
   font-family: "Courier New", Courier, monospace;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.45;
   overflow-wrap: anywhere;
