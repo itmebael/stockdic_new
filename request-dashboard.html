@@ -313,9 +313,15 @@
             </article>
           </div>
 
-          <div id="configurationForm"></div>
         </div>
       </section>
+
+      <div id="configurationModal" class="modal configuration-modal" hidden>
+        <div class="modal-content configuration-dialog">
+          <button type="button" class="dialog-close" id="closeConfigurationModal" aria-label="Close">&times;</button>
+          <div id="configurationForm"></div>
+        </div>
+      </div>
 
       <!-- AUDIT -->
       <section id="auditPage" class="page">
@@ -326,6 +332,10 @@
               <p>Select items to print their audit slips together, or print one item at a time.</p>
             </div>
             <div class="audit-toolbar">
+              <label class="audit-search-filter" for="auditSearch">
+                Search items
+                <input id="auditSearch" type="search" placeholder="Name or item ID">
+              </label>
               <label class="audit-category-filter" for="auditCategoryFilter">
                 Category
                 <select id="auditCategoryFilter">

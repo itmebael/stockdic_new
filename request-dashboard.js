@@ -1629,6 +1629,7 @@ function renderAudit() {
   }
 
   const categoryFilter = $("auditCategoryFilter");
+  const searchTerm = $("auditSearch").value.trim().toLocaleLowerCase();
   const previousCategory = categoryFilter.value;
   const categories = [...new Set(
     state.stock.map((item) => item.category).filter(Boolean)
@@ -1645,9 +1646,13 @@ function renderAudit() {
     ? previousCategory
     : "";
 
-  const visibleItems = categoryFilter.value
-    ? state.stock.filter((item) => item.category === categoryFilter.value)
-    : state.stock;
+  const visibleItems = state.stock.filter((item) => {
+    const matchesCategory =
+      !categoryFilter.value || item.category === categoryFilter.value;
+    const searchable = `${item.name} ${item.code} ${item.category} ${item.unit}`
+      .toLocaleLowerCase();
+    return matchesCategory && (!searchTerm || searchable.includes(searchTerm));
+  });
 
   $("auditGrid").innerHTML =
     visibleItems.length
@@ -1699,7 +1704,11 @@ function renderAudit() {
       ).join("")
       : `
         <p>
-          ${state.stock.length ? "No items in this category." : "No inventory items found."}
+          ${searchTerm
+            ? "No items match your search."
+            : categoryFilter.value
+              ? "No items in this category."
+              : "No inventory items found."}
         </p>
       `;
 
@@ -1708,6 +1717,11 @@ function renderAudit() {
 
 $("auditCategoryFilter").addEventListener(
   "change",
+  renderAudit
+);
+
+$("auditSearch").addEventListener(
+  "input",
   renderAudit
 );
 
@@ -1782,9 +1796,7 @@ $("auditGrid").addEventListener(
       <div>
         Date:
         ${escapeHTML(
-          formatDate(
-            new Date()
-          )
+          new Date().toLocaleDateString("en-PH", { dateStyle: "medium" })
         )}
       </div>
 
@@ -1920,7 +1932,7 @@ $("printSelectedAudit").addEventListener(
     }
 
     const printedDate =
-      escapeHTML(formatDate(new Date()));
+      escapeHTML(new Date().toLocaleDateString("en-PH", { dateStyle: "medium" }));
     const itemSlips = selectedItems.map((item) => [
       '<section class="audit-item-slip">',
       '<div class="receipt-title">AVENTUS MEDICAL INC.<br>STOCK AUDIT</div>',
@@ -2040,7 +2052,18 @@ function openPrintableHTML(content) {
 function renderConfigurationForm(html) {
   $("configurationForm").innerHTML =
     html;
+  $("configurationModal").hidden = false;
 }
+
+$("closeConfigurationModal").addEventListener("click", () => {
+  $("configurationModal").hidden = true;
+});
+
+$("configurationModal").addEventListener("click", (event) => {
+  if (event.target === $("configurationModal")) {
+    $("configurationModal").hidden = true;
+  }
+});
 
 $("addItemButton").addEventListener(
   "click",
@@ -2244,6 +2267,7 @@ async function addStockItem(event) {
   form.reset();
 
   await loadStock();
+  $("configurationModal").hidden = true;
 }
 
 /* ==========================================================
@@ -2468,6 +2492,7 @@ $("editItemButton").addEventListener(
           console.error("Inventory refresh failed after saving.", error);
           alert(databaseFailureMessage(error));
         }
+        $("configurationModal").hidden = true;
       }
     );
   }

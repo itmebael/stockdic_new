@@ -262,6 +262,24 @@ button:disabled {
   gap: 10px;
 }
 
+.audit-search-filter {
+  display: grid;
+  gap: 5px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.audit-search-filter input {
+  min-width: 220px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+}
+
 .audit-category-filter {
   display: grid;
   gap: 5px;
@@ -959,13 +977,26 @@ td {
 }
 
 #configurationForm {
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 #configurationForm form {
   display: grid;
   gap: 15px;
   max-width: 600px;
+}
+
+.configuration-modal {
+  align-items: center;
+}
+
+.configuration-dialog {
+  position: relative;
+  max-width: 620px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  margin: auto;
+  padding: 30px 24px 24px;
 }
 
 /* RECEIPT MODAL */
@@ -1172,6 +1203,12 @@ td {
 
   .audit-category-filter {
     flex: 1;
+  }
+
+  .audit-search-filter,
+  .audit-search-filter input {
+    width: 100%;
+    min-width: 0;
   }
 
   .audit-category-filter select {
