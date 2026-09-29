@@ -1761,6 +1761,11 @@ $("auditGrid").addEventListener(
       </div>
 
       <div>
+        Item ID:
+        ${escapeHTML(item.code || "—")}
+      </div>
+
+      <div>
         Unit:
         ${escapeHTML(
           item.unit
@@ -1922,6 +1927,7 @@ $("printSelectedAudit").addEventListener(
       '<div class="receipt-divider"></div>',
       "<div>Category: " + escapeHTML(item.category) + "</div>",
       "<div>Name: " + escapeHTML(item.name) + "</div>",
+      "<div>Item ID: " + escapeHTML(item.code || "—") + "</div>",
       "<div>Unit: " + escapeHTML(item.unit) + "</div>",
       "<div>Balance: " + formatQuantity(item.balance) + "</div>",
       "<div>Date: " + printedDate + "</div>",
