@@ -85,6 +85,7 @@ const state = {
 };
 
 let quantityItemId = null;
+let pendingRequestReference = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -248,6 +249,7 @@ $("clinicSelect").addEventListener(
 
     state.stock = [];
     state.requestBox = [];
+    pendingRequestReference = null;
 
     closeRequestPreview();
     $("requestBox").hidden = true;
@@ -772,6 +774,8 @@ async function saveRequest() {
       ...item
     }));
 
+  pendingRequestReference ||= createReference();
+
   const saveButton = $("confirmSaveRequest");
 
   saveButton.disabled = true;
@@ -837,7 +841,7 @@ async function saveRequest() {
             departmentId,
 
           reference_number:
-            createReference(),
+            pendingRequestReference,
 
           receiver_name:
             receiverName,
@@ -896,6 +900,7 @@ async function saveRequest() {
     }
 
     state.requestBox = [];
+    pendingRequestReference = null;
 
     renderRequestBox();
 
@@ -1273,6 +1278,7 @@ function openRequestPreview() {
     showMessage("Please add at least one item to the box.", true);
     return;
   }
+  pendingRequestReference ||= createReference();
   $("requestBox").hidden = true;
   $("toggleRequestBox").setAttribute("aria-expanded", "false");
   const department = state.departments.find(
@@ -1292,7 +1298,7 @@ function openRequestPreview() {
     <div class="thermal-receipt request-preview-receipt">
       <div class="receipt-title">${escapeHTML(clinic.name)}<br>STOCK REQUEST RECEIPT</div>
       <div class="receipt-divider receipt-divider-strong"></div>
-      <div>Req: PREVIEW</div>
+      <div>Req: ${escapeHTML(pendingRequestReference)}</div>
       <div>Dept: ${escapeHTML(department?.name || "Requester")}</div>
       <div>Date: ${escapeHTML(previewDate)}</div>
       <div>Status: Need Acknowledgement</div>
@@ -1347,6 +1353,7 @@ $("savePreviewImage").addEventListener("click", async () => {
 });
 $("cancelRequest").addEventListener("click", () => {
   state.requestBox = [];
+  pendingRequestReference = null;
   renderRequestBox();
   $("receiverName").value = "";
   $("requestRemarks").value = "";
