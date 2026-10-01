@@ -612,6 +612,7 @@ function renderRequestBox() {
 
       return `
         <div class="request-box-item">
+          <button type="button" class="remove-request-item" data-remove-id="${item.id}" aria-label="Remove ${escapeHTML(item.name)} from request">&times;</button>
           <div class="request-box-item-name">
             ${escapeHTML(item.name)}
 
@@ -643,14 +644,6 @@ function renderRequestBox() {
               data-delta="1"
             >
               +
-            </button>
-
-            <button
-              type="button"
-              data-remove-id="${item.id}"
-              aria-label="Remove item"
-            >
-              ×
             </button>
           </div>
         </div>
@@ -699,7 +692,11 @@ $("requestBoxItems").addEventListener(
   }
 );
 
-$("toggleRequestBox").addEventListener("click", openRequestPreview);
+$("toggleRequestBox").addEventListener("click", () => {
+  renderRequestBox();
+  $("requestBox").hidden = false;
+  $("toggleRequestBox").setAttribute("aria-expanded", "true");
+});
 
 /* ==========================================================
    SAVE REQUEST
@@ -1276,6 +1273,8 @@ function openRequestPreview() {
     showMessage("Please add at least one item to the box.", true);
     return;
   }
+  $("requestBox").hidden = true;
+  $("toggleRequestBox").setAttribute("aria-expanded", "false");
   const department = state.departments.find(
     (entry) => entry.id === Number($("departmentSelect").value)
   );
@@ -1318,6 +1317,10 @@ function closeRequestPreview() {
 }
 
 $("previewRequest").addEventListener("click", openRequestPreview);
+$("backRequestBox").addEventListener("click", () => {
+  $("requestBox").hidden = true;
+  $("toggleRequestBox").setAttribute("aria-expanded", "false");
+});
 $("saveRequest").addEventListener("click", openRequestPreview);
 $("closeRequestPreview").addEventListener("click", closeRequestPreview);
 $("cancelPreview").addEventListener("click", closeRequestPreview);
