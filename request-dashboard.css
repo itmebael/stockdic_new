@@ -1029,6 +1029,69 @@ td {
   padding: 24px;
 }
 
+.request-preview-dialog {
+  max-width: 330px;
+  padding: 14px;
+}
+
+.request-preview-dialog .dialog-close {
+  z-index: 1;
+}
+
+.request-preview-receipt {
+  max-width: none;
+  padding: 10px 2px 4px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.request-preview-receipt .receipt-title {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.request-preview-receipt .receipt-divider-strong {
+  border-top-style: double;
+  border-top-width: 4px;
+}
+
+.request-preview-receipt .preview-item {
+  margin: 7px 0;
+}
+
+.request-preview-receipt .preview-item small {
+  display: block;
+  padding-left: 12px;
+  font-size: inherit;
+}
+
+.request-preview-receipt .receipt-acknowledgement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 32px;
+}
+
+.request-preview-receipt .receipt-acknowledgement input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+
+.request-preview-receipt .receipt-signature {
+  margin-top: 28px;
+  padding-top: 4px;
+}
+
+.request-preview-receipt .receipt-encoded {
+  margin: 25px 0 12px;
+  text-align: center;
+}
+
+.request-preview-receipt .receipt-remarks {
+  overflow-wrap: anywhere;
+}
+
 .request-preview-dialog table {
   width: 100%;
   border-collapse: collapse;

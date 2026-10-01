@@ -1279,15 +1279,36 @@ function openRequestPreview() {
   const department = state.departments.find(
     (entry) => entry.id === Number($("departmentSelect").value)
   );
+  const clinic = clinicConfig();
+  const previewDate = new Intl.DateTimeFormat("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit"
+  }).format(new Date());
   const rows = state.requestBox.map((entry) => {
     const item = state.stock.find((stock) => stock.id === entry.id);
-    return `<tr><td>${escapeHTML(item?.name || "Item")}</td><td>${escapeHTML(item?.unit || "")}</td><td>${formatQuantity(entry.quantity)}</td></tr>`;
+    return `<div class="receipt-row preview-item"><span>${escapeHTML(item?.name || "Item")}<small>${escapeHTML(item?.unit || "")}</small></span><strong>${formatQuantity(entry.quantity)}</strong></div>`;
   }).join("");
+  const totalQuantity = state.requestBox.reduce((sum, entry) => sum + toNumber(entry.quantity), 0);
   $("requestPreviewContent").innerHTML = `
-    <p><strong>Department:</strong> ${escapeHTML(department?.name || "Not selected")}</p>
-    <p><strong>Receiver:</strong> ${escapeHTML($("receiverName").value.trim() || "Not entered")}</p>
-    <div class="table-scroll"><table><thead><tr><th>Item</th><th>Unit</th><th>Quantity</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p><strong>Remarks:</strong> ${escapeHTML($("requestRemarks").value.trim() || "None")}</p>
+    <div class="thermal-receipt request-preview-receipt">
+      <div class="receipt-title">${escapeHTML(clinic.name)}<br>STOCK REQUEST RECEIPT</div>
+      <div class="receipt-divider receipt-divider-strong"></div>
+      <div>Req: PREVIEW</div>
+      <div>Dept: ${escapeHTML(department?.name || "Requester")}</div>
+      <div>Date: ${escapeHTML(previewDate)}</div>
+      <div>Status: Need Acknowledgement</div>
+      <div class="receipt-divider"></div>
+      <div class="receipt-row"><strong>ITEM</strong><strong>QTY</strong></div>
+      <div class="receipt-divider"></div>
+      ${rows}
+      <div class="receipt-divider"></div>
+      <div>Total: ${formatQuantity(totalQuantity)}</div>
+      <label class="receipt-acknowledgement"><input type="checkbox"> Done acknowledgement</label>
+      <div class="receipt-signature">Stock Clerk Signature<br>${escapeHTML(clinic.name.replace(/ Clinic$/i, ""))} Stock Clerk</div>
+      <div class="receipt-signature">Receiver Signature<br>${escapeHTML($("receiverName").value.trim() || "Requester")}</div>
+      <div class="receipt-encoded">Encoded by ${escapeHTML(clinic.name.replace(/ Clinic$/i, ""))} Stock Clerk</div>
+      ${$("requestRemarks").value.trim() ? `<div class="receipt-remarks"><strong>Remarks:</strong> ${escapeHTML($("requestRemarks").value.trim())}</div>` : ""}
+    </div>
   `;
   $("requestPreviewModal").hidden = false;
 }
