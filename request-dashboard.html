@@ -145,7 +145,7 @@
               <p>Select items from the current clinic's stock.</p>
             </div>
 
-            <button class="box-btn" id="toggleRequestBox" aria-controls="requestBox" aria-expanded="false">
+            <button class="box-btn" id="toggleRequestBox" aria-controls="requestPreviewModal" aria-haspopup="dialog">
               Request Box (<span id="boxCount">0</span>)
             </button>
           </div>
@@ -393,6 +393,7 @@
       <div id="requestPreviewContent"></div>
       <div class="receipt-actions">
         <button type="button" class="secondary-btn" id="cancelPreview">Cancel</button>
+        <button type="button" class="secondary-btn" id="savePreviewImage">Save as Image</button>
         <button type="button" class="primary-btn" id="confirmSaveRequest">Save Request</button>
       </div>
     </div>

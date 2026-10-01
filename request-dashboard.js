@@ -699,17 +699,7 @@ $("requestBoxItems").addEventListener(
   }
 );
 
-$("toggleRequestBox").addEventListener(
-  "click",
-  () => {
-    $("requestBox").hidden =
-      !$("requestBox").hidden;
-    $("toggleRequestBox").setAttribute(
-      "aria-expanded",
-      String(!$("requestBox").hidden)
-    );
-  }
-);
+$("toggleRequestBox").addEventListener("click", openRequestPreview);
 
 /* ==========================================================
    SAVE REQUEST
@@ -1310,6 +1300,27 @@ $("previewRequest").addEventListener("click", openRequestPreview);
 $("saveRequest").addEventListener("click", openRequestPreview);
 $("closeRequestPreview").addEventListener("click", closeRequestPreview);
 $("cancelPreview").addEventListener("click", closeRequestPreview);
+$("savePreviewImage").addEventListener("click", async () => {
+  if (typeof window.html2canvas !== "function") {
+    showMessage("Image export is unavailable. Check your internet connection and try again.", true);
+    return;
+  }
+  const button = $("savePreviewImage");
+  button.disabled = true;
+  button.textContent = "Preparing Image...";
+  try {
+    const canvas = await window.html2canvas($("requestPreviewContent"), { backgroundColor: "#ffffff", scale: 2 });
+    const link = document.createElement("a");
+    link.download = "request-preview-" + new Date().toISOString().slice(0, 10) + ".png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  } catch (error) {
+    showMessage("Could not save the request image: " + error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Save as Image";
+  }
+});
 $("cancelRequest").addEventListener("click", () => {
   state.requestBox = [];
   renderRequestBox();
